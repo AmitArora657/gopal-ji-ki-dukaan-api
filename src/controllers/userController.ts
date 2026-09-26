@@ -36,7 +36,7 @@ export const getUserById = async (
   try {
     const id = Number(req.params.id);
 
-    if (isNaN(id)) {
+    if (!Number.isInteger(id) || id <= 0) {
       res.status(400).json({
         success: false,
         message: "Invalid user ID",
@@ -75,17 +75,63 @@ export const createUser = async (
   try {
     const { name, email, password, role } = req.body as CreateUserRequest;
 
-    if (!name || !email || !password) {
+    // Name validation
+    if (typeof name !== "string" || !name.trim()) {
       res.status(400).json({
         success: false,
-        message: "Name, email and password are required",
+        message: "Name is required",
+      });
+      return;
+    }
+
+    // Email validation
+    if (typeof email !== "string" || !email.trim()) {
+      res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email.trim())) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+      return;
+    }
+
+    // Password validation
+    if (typeof password !== "string" || !password) {
+      res.status(400).json({
+        success: false,
+        message: "Password is required",
+      });
+      return;
+    }
+
+    if (password.length < 8) {
+      res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters",
+      });
+      return;
+    }
+
+    // Role validation
+    if (role !== undefined && role !== "USER" && role !== "ADMIN") {
+      res.status(400).json({
+        success: false,
+        message: "Role must be either USER or ADMIN",
       });
       return;
     }
 
     const user = await userService.createUser({
-      name,
-      email,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
       password,
       role,
     });

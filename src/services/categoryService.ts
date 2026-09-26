@@ -2,14 +2,28 @@ import db from "../config/database.js";
 
 export const getAllCategories = async () => {
   return db("categories")
-    .select("id_category", "name", "is_active", "created_at", "updated_at")
+    .select(
+      "id_category",
+      "name",
+      "is_active",
+      "created_at",
+      "updated_at",
+      "updated_by",
+    )
     .where("is_active", true)
     .orderBy("id_category", "asc");
 };
 
 export const getCategoryById = async (id: number) => {
   return db("categories")
-    .select("id_category", "name", "is_active", "created_at", "updated_at")
+    .select(
+      "id_category",
+      "name",
+      "is_active",
+      "created_at",
+      "updated_at",
+      "updated_by",
+    )
     .where("id_category", id)
     .where("is_active", true)
     .first();
@@ -44,13 +58,14 @@ export const createCategory = async (category: CreateCategoryInput) => {
         "is_active",
         "created_at",
         "updated_at",
+        "updated_by",
       ]);
 
     return createdCategory;
   });
 };
 
-export const deleteCategory = async (id: number) => {
+export const deleteCategory = async (id: number, updatedBy: number) => {
   return db.transaction(async (trx) => {
     const category = await trx("categories")
       .select("id_category", "name", "is_active")
@@ -70,6 +85,7 @@ export const deleteCategory = async (id: number) => {
       .update({
         is_active: false,
         updated_at: trx.fn.now(),
+        updated_by: updatedBy,
       })
       .returning([
         "id_category",
@@ -77,6 +93,7 @@ export const deleteCategory = async (id: number) => {
         "is_active",
         "created_at",
         "updated_at",
+        "updated_by",
       ]);
 
     return deletedCategory;
@@ -85,6 +102,7 @@ export const deleteCategory = async (id: number) => {
 
 interface UpdateCategoryInput {
   name: string;
+  updated_by: number;
 }
 
 export const updateCategory = async (
@@ -125,6 +143,7 @@ export const updateCategory = async (
       .update({
         name: categoryName,
         updated_at: trx.fn.now(),
+        updated_by: category.updated_by,
       })
       .returning([
         "id_category",
@@ -132,6 +151,7 @@ export const updateCategory = async (
         "is_active",
         "created_at",
         "updated_at",
+        "updated_by",
       ]);
 
     return updatedCategory;

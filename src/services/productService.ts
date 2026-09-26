@@ -13,6 +13,7 @@ export const getAllProducts = async () => {
       "p.is_active",
       "p.created_at",
       "p.updated_at",
+      "p.updated_by",
       "c.name as category_name",
     )
     .join("categories as c", "p.id_category", "c.id_category")
@@ -33,6 +34,7 @@ export const getProductById = async (id: number) => {
       "p.is_active",
       "p.created_at",
       "p.updated_at",
+      "p.updated_by",
       "c.name as category_name",
     )
     .join("categories as c", "p.id_category", "c.id_category")
@@ -84,13 +86,14 @@ export const createProduct = async (product: CreateProductInput) => {
         "is_active",
         "created_at",
         "updated_at",
+        "updated_by",
       ]);
 
     return createdProduct;
   });
 };
 
-export const deleteProduct = async (id: number) => {
+export const deleteProduct = async (id: number, updatedBy: number) => {
   return db.transaction(async (trx) => {
     const product = await trx("products")
       .select("id_product", "name", "is_active")
@@ -110,6 +113,7 @@ export const deleteProduct = async (id: number) => {
       .update({
         is_active: false,
         updated_at: trx.fn.now(),
+        updated_by: updatedBy,
       })
       .returning([
         "id_product",
@@ -121,6 +125,7 @@ export const deleteProduct = async (id: number) => {
         "is_active",
         "created_at",
         "updated_at",
+        "updated_by",
       ]);
 
     return deletedProduct;
@@ -134,6 +139,7 @@ interface UpdateProductInput {
   price: number;
   stock_quantity: number;
   image_url?: string;
+  updated_by: number;
 }
 
 export const updateProduct = async (
@@ -190,6 +196,7 @@ export const updateProduct = async (
         stock_quantity: product.stock_quantity,
         image_url: product.image_url?.trim() || null,
         updated_at: trx.fn.now(),
+        updated_by: product.updated_by,
       })
       .returning([
         "id_product",
@@ -202,6 +209,7 @@ export const updateProduct = async (
         "is_active",
         "created_at",
         "updated_at",
+        "updated_by",
       ]);
 
     return updatedProduct;

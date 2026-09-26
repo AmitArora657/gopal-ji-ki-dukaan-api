@@ -5,7 +5,6 @@ import {
   authenticateToken,
   type AuthenticatedRequest,
 } from "../middleware/authMiddleware.js";
-import { requireAdmin } from "../middleware/roleMiddleware.js";
 
 const router = Router();
 
@@ -18,18 +17,5 @@ router.get("/me", authenticateToken, (req: AuthenticatedRequest, res) => {
     user: req.user,
   });
 });
-
-router.get(
-  "/admin-test",
-  authenticateToken,
-  requireAdmin,
-  (req: AuthenticatedRequest, res) => {
-    res.status(200).json({
-      success: true,
-      message: "Admin access granted",
-      user: req.user,
-    });
-  },
-);
 
 export default router;

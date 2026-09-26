@@ -1,4 +1,6 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
+
+import type { AuthenticatedRequest } from "../middleware/authMiddleware.js";
 
 import {
   createCategory,
@@ -8,7 +10,10 @@ import {
   updateCategory,
 } from "../services/categoryService.js";
 
-export const getCategories = async (_req: Request, res: Response) => {
+export const getCategories = async (
+  _req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
     const categories = await getAllCategories();
 
@@ -26,7 +31,7 @@ export const getCategories = async (_req: Request, res: Response) => {
   }
 };
 
-export const getCategory = async (req: Request, res: Response) => {
+export const getCategory = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = Number(req.params.id);
 
@@ -62,11 +67,10 @@ export const getCategory = async (req: Request, res: Response) => {
   }
 };
 
-export const addCategory = async (req: Request, res: Response) => {
+export const addCategory = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { name } = req.body;
 
-    // Validate category name
     if (!name || typeof name !== "string" || !name.trim()) {
       res.status(400).json({
         success: false,
@@ -102,7 +106,10 @@ export const addCategory = async (req: Request, res: Response) => {
   }
 };
 
-export const removeCategory = async (req: Request, res: Response) => {
+export const removeCategory = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
     const id = Number(req.params.id);
 
@@ -114,7 +121,15 @@ export const removeCategory = async (req: Request, res: Response) => {
       return;
     }
 
-    const category = await deleteCategory(id);
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+      return;
+    }
+
+    const category = await deleteCategory(id, req.user.id_user);
 
     res.status(200).json({
       success: true,
@@ -150,7 +165,10 @@ export const removeCategory = async (req: Request, res: Response) => {
   }
 };
 
-export const editCategory = async (req: Request, res: Response) => {
+export const editCategory = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
     const id = Number(req.params.id);
 
@@ -172,8 +190,17 @@ export const editCategory = async (req: Request, res: Response) => {
       return;
     }
 
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+      return;
+    }
+
     const category = await updateCategory(id, {
       name,
+      updated_by: req.user.id_user,
     });
 
     res.status(200).json({

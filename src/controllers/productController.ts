@@ -1,4 +1,6 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
+
+import type { AuthenticatedRequest } from "../middleware/authMiddleware.js";
 
 import {
   createProduct,
@@ -8,7 +10,10 @@ import {
   updateProduct,
 } from "../services/productService.js";
 
-export const getProducts = async (_req: Request, res: Response) => {
+export const getProducts = async (
+  _req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
     const products = await getAllProducts();
 
@@ -26,7 +31,7 @@ export const getProducts = async (_req: Request, res: Response) => {
   }
 };
 
-export const getProduct = async (req: Request, res: Response) => {
+export const getProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = Number(req.params.id);
 
@@ -62,7 +67,7 @@ export const getProduct = async (req: Request, res: Response) => {
   }
 };
 
-export const addProduct = async (req: Request, res: Response) => {
+export const addProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id_category, name, description, price, stock_quantity, image_url } =
       req.body;
@@ -137,7 +142,10 @@ export const addProduct = async (req: Request, res: Response) => {
   }
 };
 
-export const removeProduct = async (req: Request, res: Response) => {
+export const removeProduct = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
     const id = Number(req.params.id);
 
@@ -149,7 +157,15 @@ export const removeProduct = async (req: Request, res: Response) => {
       return;
     }
 
-    const product = await deleteProduct(id);
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+      return;
+    }
+
+    const product = await deleteProduct(id, req.user.id_user);
 
     res.status(200).json({
       success: true,
@@ -185,7 +201,7 @@ export const removeProduct = async (req: Request, res: Response) => {
   }
 };
 
-export const editProduct = async (req: Request, res: Response) => {
+export const editProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const id = Number(req.params.id);
 
@@ -233,6 +249,14 @@ export const editProduct = async (req: Request, res: Response) => {
       return;
     }
 
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+      return;
+    }
+
     const product = await updateProduct(id, {
       id_category,
       name,
@@ -240,6 +264,7 @@ export const editProduct = async (req: Request, res: Response) => {
       price,
       stock_quantity,
       image_url,
+      updated_by: req.user.id_user,
     });
 
     res.status(200).json({

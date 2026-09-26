@@ -43,9 +43,33 @@ export const authenticateToken = (
       return;
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-    req.user = decoded;
+    if (typeof decoded === "string") {
+      res.status(401).json({
+        success: false,
+        message: "Invalid token payload",
+      });
+      return;
+    }
+
+    if (
+      typeof decoded.id_user !== "number" ||
+      typeof decoded.email !== "string" ||
+      (decoded.role !== "USER" && decoded.role !== "ADMIN")
+    ) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid token payload",
+      });
+      return;
+    }
+
+    req.user = {
+      id_user: decoded.id_user,
+      email: decoded.email,
+      role: decoded.role,
+    };
 
     next();
   } catch (error) {
