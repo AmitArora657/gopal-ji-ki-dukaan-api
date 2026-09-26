@@ -7,13 +7,20 @@ import {
   getCategory,
   removeCategory,
 } from "../controllers/categoryController.js";
+import { authenticateToken } from "../middleware/authMiddleware.js";
+import { requireAdmin } from "../middleware/roleMiddleware.js";
 
 const router = Router();
 
+// Public routes
 router.get("/", getCategories);
 router.get("/:id", getCategory);
-router.post("/", addCategory);
-router.put("/:id", editCategory);
-router.delete("/:id", removeCategory);
+
+// Admin-only routes
+router.post("/", authenticateToken, requireAdmin, addCategory);
+
+router.put("/:id", authenticateToken, requireAdmin, editCategory);
+
+router.delete("/:id", authenticateToken, requireAdmin, removeCategory);
 
 export default router;
