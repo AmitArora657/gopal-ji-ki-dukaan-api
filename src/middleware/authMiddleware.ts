@@ -23,22 +23,12 @@ export const authenticateToken = (
   next: NextFunction,
 ): void => {
   try {
-    const authHeader = req.headers.authorization;
+    const token = req.cookies?.accessToken;
 
-    if (!authHeader) {
+    if (!token) {
       res.status(401).json({
         success: false,
-        message: "Authorization token is required",
-      });
-      return;
-    }
-
-    const [scheme, token] = authHeader.split(" ");
-
-    if (scheme !== "Bearer" || !token) {
-      res.status(401).json({
-        success: false,
-        message: "Invalid authorization format",
+        message: "Authentication required",
       });
       return;
     }

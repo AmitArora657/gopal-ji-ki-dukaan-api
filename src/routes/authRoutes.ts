@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { login } from "../controllers/authController.js";
+import { login, logout } from "../controllers/authController.js";
 import {
   authenticateToken,
   type AuthenticatedRequest,
@@ -9,6 +9,7 @@ import {
 const router = Router();
 
 router.post("/login", login);
+router.post("/logout", logout);
 
 router.get("/me", authenticateToken, (req: AuthenticatedRequest, res) => {
   res.status(200).json({
