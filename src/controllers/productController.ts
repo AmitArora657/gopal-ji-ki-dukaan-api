@@ -7,6 +7,8 @@ import {
   deleteProduct,
   getAllProducts,
   getProductById,
+  getProductImageById,
+  saveProductImages,
   updateProduct,
 } from "../services/productService.js";
 
@@ -69,8 +71,17 @@ export const getProduct = async (req: AuthenticatedRequest, res: Response) => {
 
 export const addProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id_category, name, description, price, stock_quantity, image_url } =
-      req.body;
+    const id_category = Number(req.body.id_category);
+    const name = req.body.name;
+    const description = req.body.description;
+    const price = Number(req.body.price);
+    const stock_quantity =
+      req.body.stock_quantity === undefined || req.body.stock_quantity === ""
+        ? 0
+        : Number(req.body.stock_quantity);
+    const image_url = req.body.image_url;
+
+    const files = (req.files ?? []) as Express.Multer.File[];
 
     if (!Number.isInteger(id_category) || id_category <= 0) {
       res.status(400).json({
@@ -88,7 +99,7 @@ export const addProduct = async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
 
-    if (typeof price !== "number" || price < 0) {
+    if (!Number.isFinite(price) || price < 0) {
       res.status(400).json({
         success: false,
         message: "Valid product price is required",
@@ -96,10 +107,7 @@ export const addProduct = async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
 
-    if (
-      stock_quantity !== undefined &&
-      (!Number.isInteger(stock_quantity) || stock_quantity < 0)
-    ) {
+    if (!Number.isInteger(stock_quantity) || stock_quantity < 0) {
       res.status(400).json({
         success: false,
         message: "Stock quantity must be a non-negative integer",
@@ -116,10 +124,13 @@ export const addProduct = async (req: AuthenticatedRequest, res: Response) => {
       image_url,
     });
 
+    const images = await saveProductImages(product.id_product, files);
+
     res.status(201).json({
       success: true,
       message: "Product created successfully",
       product,
+      images,
     });
   } catch (error) {
     console.error("Error creating product:", error);
@@ -310,6 +321,50 @@ export const editProduct = async (req: AuthenticatedRequest, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Failed to update product",
+    });
+  }
+};
+
+export const getProductImage = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const id = Number(req.params.id);
+    const imageId = Number(req.params.imageId);
+
+    if (
+      !Number.isInteger(id) ||
+      id <= 0 ||
+      !Number.isInteger(imageId) ||
+      imageId <= 0
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid product or image ID",
+      });
+      return;
+    }
+
+    const image = await getProductImageById(id, imageId);
+
+    if (!image) {
+      res.status(404).json({
+        success: false,
+        message: "Product image not found",
+      });
+      return;
+    }
+
+    res.setHeader("Content-Type", image.image_mime_type);
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.status(200).send(image.image_data);
+  } catch (error) {
+    console.error("Error fetching product image:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch product image",
     });
   }
 };

@@ -215,3 +215,34 @@ export const updateProduct = async (
     return updatedProduct;
   });
 };
+
+export const saveProductImages = async (
+  id_product: number,
+  images: Express.Multer.File[],
+) => {
+  if (images.length === 0) {
+    return [];
+  }
+
+  return db("product_images")
+    .insert(
+      images.map((image, index) => ({
+        id_product,
+        image_data: image.buffer,
+        image_mime_type: image.mimetype,
+        is_primary: index === 0,
+      })),
+    )
+    .returning(["id_image", "id_product", "image_mime_type", "is_primary"]);
+};
+
+export const getProductImageById = async (
+  id_product: number,
+  id_image: number,
+) => {
+  return db("product_images")
+    .select("image_data", "image_mime_type")
+    .where("id_product", id_product)
+    .where("id_image", id_image)
+    .first();
+};

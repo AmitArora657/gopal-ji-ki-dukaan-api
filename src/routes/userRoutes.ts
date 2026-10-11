@@ -4,12 +4,16 @@ import {
   createUser,
   getAllUsers,
   getUserById,
+  registerUser,
 } from "../controllers/userController.js";
 
 import { authenticateToken } from "../middleware/authMiddleware.js";
 import { requireAdmin } from "../middleware/roleMiddleware.js";
 
 const router = Router();
+
+// Public customer registration
+router.post("/register", registerUser);
 
 // Admin-only user management
 router.get("/", authenticateToken, requireAdmin, getAllUsers);

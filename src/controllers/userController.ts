@@ -158,3 +158,83 @@ export const createUser = async (
     });
   }
 };
+
+export const registerUser = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { name, email, password } = req.body ?? {};
+
+    if (typeof name !== "string" || !name.trim()) {
+      res.status(400).json({
+        success: false,
+        message: "Name is required",
+      });
+      return;
+    }
+
+    if (typeof email !== "string" || !email.trim()) {
+      res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+      return;
+    }
+
+    if (typeof password !== "string" || !password) {
+      res.status(400).json({
+        success: false,
+        message: "Password is required",
+      });
+      return;
+    }
+
+    if (password.length < 8) {
+      res.status(400).json({
+        success: false,
+        message: "Password must be at least 8 characters",
+      });
+      return;
+    }
+
+    // Public registration always creates a USER.
+    const user = await userService.createUser({
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Registration successful",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error registering user:", error);
+
+    if (error instanceof Error && error.message === "User already exists") {
+      res.status(409).json({
+        success: false,
+        message: "An account with this email already exists",
+      });
+      return;
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Registration failed",
+    });
+  }
+};
