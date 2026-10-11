@@ -17,7 +17,7 @@ const router = Router();
 
 // Public routes
 router.get("/", getProducts);
-router.get("/:id/image", getProductImage);
+router.get("/:id/images/:imageId", getProductImage);
 router.get("/:id", getProduct);
 
 // Admin-only routes
