@@ -1,7 +1,40 @@
 import db from "../config/database.js";
 
+interface ProductImageSummary {
+  id_image: number;
+  is_primary: boolean;
+}
+
+const attachImages = async <T extends { id_product: number }>(
+  products: T[],
+): Promise<(T & { images: ProductImageSummary[] })[]> => {
+  if (products.length === 0) {
+    return [];
+  }
+
+  const rows: (ProductImageSummary & { id_product: number })[] = await db(
+    "product_images",
+  )
+    .select("id_image", "id_product", "is_primary")
+    .whereIn(
+      "id_product",
+      products.map((product) => product.id_product),
+    )
+    .orderBy([
+      { column: "is_primary", order: "desc" },
+      { column: "id_image", order: "asc" },
+    ]);
+
+  return products.map((product) => ({
+    ...product,
+    images: rows
+      .filter((row) => row.id_product === product.id_product)
+      .map(({ id_image, is_primary }) => ({ id_image, is_primary })),
+  }));
+};
+
 export const getAllProducts = async () => {
-  return db("products as p")
+  const products = await db("products as p")
     .select(
       "p.id_product",
       "p.id_category",
@@ -19,10 +52,12 @@ export const getAllProducts = async () => {
     .join("categories as c", "p.id_category", "c.id_category")
     .where("p.is_active", true)
     .orderBy("p.id_product", "asc");
+
+  return attachImages(products);
 };
 
 export const getProductById = async (id: number) => {
-  return db("products as p")
+  const product = await db("products as p")
     .select(
       "p.id_product",
       "p.id_category",
@@ -41,6 +76,14 @@ export const getProductById = async (id: number) => {
     .where("p.id_product", id)
     .where("p.is_active", true)
     .first();
+
+  if (!product) {
+    return undefined;
+  }
+
+  const [productWithImages] = await attachImages([product]);
+
+  return productWithImages;
 };
 
 interface CreateProductInput {
