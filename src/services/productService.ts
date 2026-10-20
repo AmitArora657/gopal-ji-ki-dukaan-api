@@ -225,6 +225,7 @@ export const updateProduct = async (
       .first();
 
     if (duplicateProduct) {
+      console.log("test");
       throw new Error("Product already exists");
     }
 
