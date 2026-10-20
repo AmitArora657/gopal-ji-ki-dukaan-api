@@ -23,10 +23,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       password,
     });
 
+    // res.cookie("accessToken", result.token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "lax",
+    //   maxAge: 60 * 60 * 1000,
+    // });
+
     res.cookie("accessToken", result.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 60 * 60 * 1000,
     });
 
@@ -67,10 +74,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 export const logout = (_req: Request, res: Response): void => {
+  //   res.clearCookie("accessToken", {
+  //     httpOnly: true,
+  //     secure: process.env.NODE_ENV === "production",
+  //     sameSite: "lax",
+  //   });
+
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   });
 
   res.status(200).json({
